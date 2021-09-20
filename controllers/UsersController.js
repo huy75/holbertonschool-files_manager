@@ -45,6 +45,31 @@ class UsersController {
 
         return response.status(201).send(user);
     }
+
+    /**
+     * Should retrieve the user base on the token used
+     */
+    static async getMe(request, response) {
+        const token = request.headers['x-token'];
+        if (!token) { return response.status(401).json({ error: 'Unauthorized' }); }
+
+        // Retrieve the user based on the token
+        const authKey = `auth_${token}`;
+        const userId = await redisClient.get(authKey);
+        if (!userId) return response.status(401).send({ error: 'Unauthorized' });
+
+        const user = await dbClient.getUser({
+            _id: ObjectId(userId),
+        });
+
+        if (!user) return response.status(401).send({ error: 'Unauthorized' });
+
+        const processedUser = { id: user._id, ...user };
+        delete processedUser._id;
+        delete processedUser.password;
+        // Return the user object (email and id only)
+        return response.status(200).send(processedUser);
+    }
 }
 
 module.exports = UsersController;

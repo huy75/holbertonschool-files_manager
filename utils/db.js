@@ -28,6 +28,11 @@ class DBClient {
     async nbUsers() { return this.users.countDocuments(); }
 
     async nbFiles() { return this.files.countDocuments(); }
+
+    async getUser(query) {
+        const user = await this.db.collection('users').findOne(query);
+        return user;
+    }
 }
 
 const dbClient = new DBClient();
