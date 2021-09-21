@@ -15,5 +15,6 @@ router.get('/users/me', UsersController.getMe);
 
 // the post Routes
 router.post('/users', UsersController.postNew);
+router.post('/files', FilesController.postUpload);
 
 module.exports = router;
