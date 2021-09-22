@@ -1,4 +1,5 @@
 import redisClient from './redis';
+import dbClient from './db';
 
 async function getAuthToken(request) {
   const token = request.headers['x-token'];
@@ -13,6 +14,13 @@ async function findUserIdByToken(request) {
   return userId || null;
 }
 
+// Gets user by userId
+// Returns exactly the first user found
+async function findUserById(userId) {
+  const userExistsArray = await dbClient.users.find(`ObjectId("${userId}")`).toArray();
+  return userExistsArray[0] || null;
+}
+
 export {
-  findUserIdByToken, getAuthToken,
+  findUserIdByToken, findUserById,
 };
