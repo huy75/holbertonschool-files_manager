@@ -1,7 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import sha1 from 'sha1';
 import redisClient from '../utils/redis';
-import { findUserIdByToken } from '../utils/helpers';
 import dbClient from '../utils/db';
 
 class AuthController {
@@ -41,12 +40,13 @@ class AuthController {
    */
   static async getDisconnect(request, response) {
     // retrieve the user from the token
-    const user = await findUserIdByToken(request);
+    const token = request.headers['x-token'];
+    const user = await redisClient.get(`auth_${token}`);
     if (!user) return response.status(401).send({ error: 'Unauthorized' });
 
     // delete the token in Redis
-    await redisClient.del(user);
-    return response.status(204).send();
+    await redisClient.del(`auth_${token}`);
+    return response.status(204).end();
   }
 }
 
