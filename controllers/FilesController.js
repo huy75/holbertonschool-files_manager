@@ -15,26 +15,25 @@ class FilesController {
     const userId = await findUserIdByToken(request);
     if (!userId) return response.status(401).json({ error: 'Unauthorized' });
 
-    // Basic variables get filled in from the request
-    const { name, type, data } = request.body;
-    let { parentId, isPublic } = request.body;
     let fileInserted;
 
     // Validate the request data
+    const { name } = request.body;
     if (!name) return response.status(400).json({ error: 'Missing name' });
-    if (!type || ['folder', 'file', 'image'].indexOf(type) === -1) return response.status(401).json({ error: 'Missing type' });
+    const { type } = request.body;
+    if (!type || !['folder', 'file', 'image'].includes(type)) { return response.status(400).json({ error: 'Missing type' }); }
 
+    const isPublic = request.body.isPublic || false;
+    const parentId = request.body.parentId || 0;
+    const { data } = request.body;
+    if (!data && !['folder'].includes(type)) { return response.status(400).json({ error: 'Missing data' }); }
     // parentId (optional) as ID of the parent (default 0-> root)
-    if (!parentId) parentId = 0;
-    else {
+    if (!parentId !== 0) {
       const parentFileArray = await dbClient.files.find({ _id: ObjectID(parentId) }).toArray();
       if (parentFileArray.length === 0) return response.status(400).json({ error: 'Parent not found' });
       const file = parentFileArray[0];
       if (file.type !== 'folder') return response.status(400).json({ error: 'Parent is not a folder' });
     }
-
-    // is the file public?
-    if (!isPublic) isPublic = false;
 
     // if no data, and not a folder, error
     if (!data && type !== 'folder') return response.status(400).json({ error: 'Missing Data' });
