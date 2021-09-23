@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Queue from 'bull';
 import { findUserIdByToken } from '../utils/helpers';
 import dbClient from '../utils/db';
+import redisClient from '../utils/redis';
 
 class FilesController {
   /**
@@ -86,6 +87,34 @@ class FilesController {
     return response.status(201).json({
       id: fileInserted.ops[0]._id, userId, name, type, isPublic, parentId,
     });
+  }
+
+  // GET /files/:id
+  // Return file by fileId
+  static async getShow(request, response) {
+    // Retrieve the user based on the token
+    const token = request.headers['x-token'];
+    if (!token) { return response.status(401).json({ error: 'Unauthorized' }); }
+    const keyID = await redisClient.get(`auth_${token}`);
+    if (!keyID) { return response.status(401).json({ error: 'Unauthorized' }); }
+    const user = await dbClient.db.collection('users').findOne({ _id: ObjectID(keyID) });
+    if (!user) { return response.status(401).json({ error: 'Unauthorized' }); }
+    const file = dbClient.db.collection('files').findOne(request.params.id);
+    if (!file) { return response.status(404).json({ error: 'Not found' }); }
+    return response.json(file);
+  }
+
+  // GET /files
+  // Return the files attached to the user
+  static async getIndex(request, response) {
+    // Retrieve the user based on the token
+    const token = request.headers['x-token'];
+    if (!token) { return response.status(401).json({ error: 'Unauthorized' }); }
+    const keyID = await redisClient.get(`auth_${token}`);
+    if (!keyID) { return response.status(401).json({ error: 'Unauthorized' }); }
+    const user = await dbClient.db.collection('users').findOne({ _id: ObjectID(keyID) });
+    if (!user) { return response.status(401).json({ error: 'Unauthorized' }); }
+    return response.send([]);
   }
 }
 
