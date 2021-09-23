@@ -28,7 +28,7 @@ class FilesController {
     const { data } = request.body;
     if (!data && !['folder'].includes(type)) { return response.status(400).json({ error: 'Missing data' }); }
     // parentId (optional) as ID of the parent (default 0-> root)
-    if (!parentId !== 0) {
+    if (parentId !== 0) {
       const parentFileArray = await dbClient.files.find({ _id: ObjectID(parentId) }).toArray();
       if (parentFileArray.length === 0) return response.status(400).json({ error: 'Parent not found' });
       const file = parentFileArray[0];
