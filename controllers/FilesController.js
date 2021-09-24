@@ -99,11 +99,17 @@ class FilesController {
     if (!keyID) { return response.status(401).json({ error: 'Unauthorized' }); }
     const user = await dbClient.db.collection('users').findOne({ _id: ObjectID(keyID) });
     if (!user) { return response.status(401).json({ error: 'Unauthorized' }); }
-    const file = dbClient.db.collection('files').findOne(request.params.id);
-    if (!file) { return response.status(404).json({ error: 'Not found' }); }
-    return response.json(file);
+
+    const idFile = request.params.id || '';
+    const fileDocument = await dbClient.db
+      .collection('files')
+      .findOne({ _id: ObjectID(idFile), userId: user._id });
+    if (!fileDocument) return response.status(404).send({ error: 'Not found' });
+
+    return response.json(fileDocument);
   }
 
+  /*
   // GET /files
   // Return the files attached to the user
   static async getIndex(request, response) {
@@ -112,10 +118,15 @@ class FilesController {
     if (!token) { return response.status(401).json({ error: 'Unauthorized' }); }
     const keyID = await redisClient.get(`auth_${token}`);
     if (!keyID) { return response.status(401).json({ error: 'Unauthorized' }); }
-    const user = await dbClient.db.collection('users').findOne({ _id: ObjectID(keyID) });
-    if (!user) { return response.status(401).json({ error: 'Unauthorized' }); }
-    return response.send([]);
+
+    // Retrieve the files attached to the user
+    const { parentId = 0 } = request.query;
+    const searchTerm = parentId === 0 ? 'userId' : 'parentId';
+    const searchValue = parentId === 0 ? userId : parentId;
+    const { page = 0 } = request.query;
+
   }
+  */
 }
 
 module.exports = FilesController;
